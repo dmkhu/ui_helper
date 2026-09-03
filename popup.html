@@ -2,165 +2,385 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Data — минималистично</title>
   <style>
-    * { box-sizing: border-box; }
+    /* ——— Сброс и база ——— */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       width: 400px;
-      padding: 16px;
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      padding: 24px 20px 20px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #fafafa;
+      color: #1e1e2f;
+      transition: background 0.2s;
     }
+
+    /* ——— Заголовок ——— */
     h2 {
-      margin: 0 0 12px 0;
-      font-size: 18px;
-      color: #333;
+      font-weight: 500;
+      font-size: 20px;
+      letter-spacing: -0.3px;
+      color: #16161f;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+    h2 span {
+      background: #eaeef5;
+      padding: 2px 10px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 450;
+      color: #2c3e58;
+      letter-spacing: 0.2px;
+    }
+
+    /* ——— Строка ввода (современная, с прозрачностью) ——— */
     .row {
       display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
     }
     .row input {
-      flex: 1;
-      padding: 6px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      flex: 1 1 120px;
+      padding: 10px 14px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
       font-size: 14px;
+      font-weight: 450;
+      color: #1a1a2e;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      transition: border 0.15s, box-shadow 0.15s;
+      outline: none;
+      min-width: 80px;
     }
+    .row input:focus {
+      border-color: #7c8db0;
+      box-shadow: 0 0 0 3px rgba(108, 132, 180, 0.12);
+      background: #ffffff;
+    }
+    .row input::placeholder {
+      color: #a7b6cd;
+      font-weight: 400;
+    }
+
     .row button {
-      padding: 6px 14px;
-      background: #4CAF50;
+      padding: 10px 18px;
+      background: #1e293b;
       color: white;
       border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      border-radius: 40px;
       font-size: 14px;
-      white-space: nowrap;
-    }
-    .row button:hover { background: #43A047; }
-    .row button.delete-btn {
-      background: #e53935;
-      padding: 2px 8px;
-      font-size: 12px;
-    }
-    .row button.delete-btn:hover { background: #c62828; }
-    #list {
-      margin-top: 12px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .item {
-      display: flex;
-      justify-content: space-between;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: inline-flex;
       align-items: center;
-      background: white;
-      padding: 6px 10px;
-      border-radius: 4px;
-      margin-bottom: 4px;
-      border: 1px solid #ddd;
-    }
-    .item .key {
-      font-weight: bold;
-      color: #1565C0;
-      margin-right: 8px;
-    }
-    .item .value {
-      color: #333;
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .item .actions {
-      display: flex;
       gap: 4px;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
-    .actions button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 0 4px;
+    .row button:hover {
+      background: #0f172a;
     }
-    .actions button.fill-btn {
-      color: #1565C0;
+    .row button:active {
+      transform: scale(0.96);
     }
-    .actions button.fill-btn:hover { color: #0D47A1; }
-    .actions button.delete-btn {
-      color: #e53935;
-    }
-    .actions button.delete-btn:hover { color: #b71C1C; }
-    .empty {
-      color: #888;
-      text-align: center;
-      padding: 20px 0;
-    }
-    .hint {
-      font-size: 12px;
-      color: #666;
-      margin-top: 8px;
-    }
-    .clear-all {
-      background: #e53935;
-      color: white;
-      border: none;
-      padding: 4px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .clear-all:hover { background: #c62828; }
+
+    /* ——— Верхняя панель действий ——— */
     .header-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px 4px;
     }
-    .fill-all-btn {
-      background: #1565C0;
-      color: white;
-      border: none;
-      padding: 6px 16px;
-      border-radius: 4px;
-      cursor: pointer;
+    .header-actions .label {
       font-size: 13px;
-      font-weight: bold;
-    }
-    .fill-all-btn:hover { background: #0D47A1; }
-    .fill-all-btn:disabled {
-      background: #90CAF9;
-      cursor: not-allowed;
+      font-weight: 450;
+      color: #475569;
+      letter-spacing: 0.2px;
+      background: #f1f4f9;
+      padding: 2px 12px 2px 10px;
+      border-radius: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .button-group {
       display: flex;
       gap: 8px;
       align-items: center;
     }
+
+    .btn-soft {
+      background: transparent;
+      border: 1px solid #dce2ec;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 12.5px;
+      font-weight: 480;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .btn-soft:hover {
+      background: #f1f5f9;
+      border-color: #b9c7dd;
+    }
+    .btn-soft:active {
+      transform: scale(0.96);
+    }
+    .btn-soft.danger {
+      color: #b91c1c;
+      border-color: #f1d7d7;
+    }
+    .btn-soft.danger:hover {
+      background: #fef2f2;
+      border-color: #f5baba;
+    }
+    .btn-soft.primary {
+      color: #1e3a6f;
+      border-color: #d0dcee;
+    }
+    .btn-soft.primary:hover {
+      background: #eaf0fa;
+      border-color: #adc0df;
+    }
+    .btn-soft.warning {
+      color: #7c5c1a;
+      border-color: #ede3c9;
+    }
+    .btn-soft.warning:hover {
+      background: #fcf6e7;
+      border-color: #e4cf9e;
+    }
+
+    /* ——— Дополнительная панель (загрузить по умолчанию) ——— */
+    .action-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      background: #f8faff;
+      padding: 6px 12px 6px 16px;
+      border-radius: 40px;
+      border: 1px solid #eef3fa;
+    }
+    .action-bar .hint-text {
+      font-size: 12px;
+      color: #6b7d9b;
+      font-weight: 430;
+      letter-spacing: 0.1px;
+    }
+    .action-bar .btn-soft {
+      font-size: 12px;
+      padding: 4px 14px;
+    }
+
+    /* ——— Список элементов ——— */
+    #list {
+      margin-top: 6px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    #list::-webkit-scrollbar {
+      width: 4px;
+    }
+    #list::-webkit-scrollbar-track {
+      background: #eceff5;
+      border-radius: 20px;
+    }
+    #list::-webkit-scrollbar-thumb {
+      background: #c2cfdf;
+      border-radius: 20px;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 10px 14px;
+      border-radius: 16px;
+      margin-bottom: 6px;
+      border: 1px solid #edf2f9;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+      transition: border 0.1s, background 0.1s;
+    }
+    .item:hover {
+      border-color: #d4dfee;
+      background: #fcfdff;
+    }
+
+    .item .key {
+      font-weight: 550;
+      color: #1e3a6f;
+      margin-right: 12px;
+      font-size: 14px;
+      background: #eef4fc;
+      padding: 0 10px 0 8px;
+      border-radius: 40px;
+      line-height: 28px;
+      letter-spacing: -0.1px;
+      white-space: nowrap;
+    }
+    .item .value {
+      color: #1e293b;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 14px;
+      font-weight: 430;
+      padding-right: 4px;
+      word-break: break-word;
+    }
+    .item .actions {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+      flex-shrink: 0;
+      margin-left: 6px;
+    }
+    .actions button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 30px;
+      transition: background 0.1s, transform 0.1s;
+      color: #4b5d77;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .actions button.fill-btn {
+      color: #2660a9;
+    }
+    .actions button.fill-btn:hover {
+      background: #e3ecfa;
+      color: #0f3b78;
+    }
+    .actions button.delete-btn {
+      color: #b13e3e;
+    }
+    .actions button.delete-btn:hover {
+      background: #fce8e8;
+      color: #a12222;
+    }
+    .actions button:active {
+      transform: scale(0.90);
+    }
+
+    .empty {
+      color: #8b9bb8;
+      text-align: center;
+      padding: 28px 0 12px;
+      font-size: 14px;
+      font-weight: 430;
+      letter-spacing: -0.1px;
+      background: #f6faff;
+      border-radius: 40px;
+      margin-top: 4px;
+      border: 1px dashed #d8e2f0;
+    }
+
+    /* ——— Подсказка внизу ——— */
+    .hint {
+      font-size: 12.5px;
+      color: #5d6f8c;
+      margin-top: 18px;
+      padding: 10px 14px;
+      background: #f2f7fe;
+      border-radius: 40px;
+      border: 1px solid #e6eefa;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hint:before {
+      content: "⚡";
+      font-size: 16px;
+      opacity: 0.7;
+    }
+
+    /* ——— Современные акценты ——— */
+    .pill-count {
+      background: #dfe8f3;
+      padding: 0 12px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 450;
+      color: #1e2f4a;
+      line-height: 22px;
+    }
+
+    /* ——— Адаптивность ——— */
+    @media (max-width: 420px) {
+      body { padding: 16px; }
+      .row input { flex: 1 1 100%; }
+      .row button { width: 100%; justify-content: center; }
+      .header-actions { flex-direction: column; align-items: stretch; gap: 8px; }
+      .button-group { justify-content: flex-start; flex-wrap: wrap; }
+    }
   </style>
 </head>
 <body>
 
-<h2>📦 Test Data</h2>
+<h2>
+  📦 Тестовые данные
+  <span>пара</span>
+</h2>
 
+<!-- строка добавления -->
 <div class="row">
-  <input id="keyInput" placeholder="Ключ (например, email)" />
+  <input id="keyInput" placeholder="Ключ (email, phone…)" />
   <input id="valueInput" placeholder="Значение" />
   <button id="saveBtn">➕ Сохранить</button>
 </div>
 
+<!-- верхние действия -->
 <div class="header-actions">
-  <span style="font-size:13px;color:#666;">Сохранённые данные</span>
+  <span class="label">📋 <span id="counterLabel">0</span> записей</span>
   <div class="button-group">
-    <button class="fill-all-btn" id="fillAllBtn">📝 Заполнить все</button>
-    <button class="clear-all" id="clearAllBtn">🗑 Очистить всё</button>
+    <button class="btn-soft primary" id="fillAllBtn">📝 Заполнить все</button>
+    <button class="btn-soft danger" id="clearAllBtn">🗑 Очистить</button>
   </div>
 </div>
 
+<!-- панель загрузки дефолта -->
+<div class="action-bar">
+  <button class="btn-soft warning" id="loadDefaultBtn">📂 По умолчанию</button>
+  <span class="hint-text">из data.json</span>
+</div>
+
+<!-- список -->
 <div id="list">
   <div class="empty">Нет данных. Добавьте пару выше.</div>
 </div>
 
 <div class="hint">
-  💡 На любом сайте кликните по полю ввода — оно заполнится, если ключ поля совпадает с сохранённым.
+  На любом сайте кликните по полю — оно заполнится, если ключ совпадает.
 </div>
 
 <script src="popup.js"></script>

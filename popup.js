@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const listEl = document.getElementById('list');
   const clearAllBtn = document.getElementById('clearAllBtn');
   const fillAllBtn = document.getElementById('fillAllBtn');
+  const loadDefaultBtn = document.getElementById('loadDefaultBtn');
 
   // Загрузить и отобразить все данные
   function renderList() {
@@ -107,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 🆕 Заполнить ВСЕ поля на активной вкладке
+  // Заполнить ВСЕ поля на активной вкладке
   function fillAllOnActiveTab() {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs.length === 0) {
@@ -137,10 +138,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Загрузить данные из data.json
+  function loadDefaultData() {
+    // Получаем URL до файла data.json в папке расширения
+    const jsonUrl = chrome.runtime.getURL('data.json');
+    
+    fetch(jsonUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Файл data.json не найден');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Проверяем, что данные - это объект
+        if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+          alert('Файл data.json должен содержать объект с парами ключ-значение');
+          return;
+        }
+
+        // Проверяем, есть ли уже данные в хранилище
+        chrome.storage.local.get(null, (existingData) => {
+          const existingKeys = Object.keys(existingData);
+          
+          // Если есть существующие данные, спрашиваем пользователя
+          if (existingKeys.length > 0) {
+            if (!confirm('Внимание! У вас уже есть сохранённые данные. Загрузить данные из файла (существующие данные будут перезаписаны)?')) {
+              return;
+            }
+          }
+
+          // Очищаем существующие данные и загружаем новые
+          chrome.storage.local.clear(() => {
+            // Сохраняем данные из файла
+            chrome.storage.local.set(data, () => {
+              renderList();
+              alert(`Загружено ${Object.keys(data).length} записей из data.json`);
+            });
+          });
+        });
+      })
+      .catch(error => {
+        alert(`Ошибка загрузки data.json: ${error.message}`);
+        console.error('Ошибка загрузки data.json:', error);
+      });
+  }
+
   // События
   saveBtn.addEventListener('click', saveKeyValue);
   clearAllBtn.addEventListener('click', clearAll);
   fillAllBtn.addEventListener('click', fillAllOnActiveTab);
+  loadDefaultBtn.addEventListener('click', loadDefaultData);
 
   // Enter в полях
   keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveKeyValue(); });
