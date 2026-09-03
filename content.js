@@ -12,7 +12,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  // 🆕 Обработка "Заполнить все"
+  // Заполнить все поля
   if (request.action === 'fillAllFields') {
     const data = request.data;
     let totalFilled = 0;
@@ -33,6 +33,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     sendResponse({ filled: totalFilled });
+    return true;
+  }
+
+  // Включить/выключить автозаполнение
+  if (request.action === 'toggleAutoFill') {
+    if (request.enabled) {
+      enableAutoFill();
+    } else {
+      disableAutoFill();
+    }
+    sendResponse({ success: true });
     return true;
   }
 });
@@ -83,7 +94,7 @@ function fillInputsByKey(key, value) {
     }
   }
 
-  // Поиск по data-* атрибутам
+  // Поиск по data-* и aria-* атрибутам
   if (!found) {
     const allInputs = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
     for (const el of allInputs) {
@@ -96,10 +107,17 @@ function fillInputsByKey(key, value) {
           matched = true;
           break;
         }
-        // Проверяем aria-* атрибуты
         if (attr.name.startsWith('aria-') && attr.value.toLowerCase().includes(key.toLowerCase())) {
           matched = true;
           break;
+        }
+      }
+      
+      // Проверяем label
+      if (!matched) {
+        const label = el.closest('label')?.textContent?.trim() || '';
+        if (label.toLowerCase().includes(key.toLowerCase())) {
+          matched = true;
         }
       }
       
@@ -181,21 +199,155 @@ function showNotification(text) {
   }, 4000);
 }
 
-// Автоматическое заполнение при клике по полю (опционально)
-// Раскомментируйте для включения
-/*
-document.addEventListener('click', (e) => {
-  const el = e.target;
-  if (el.matches('input:not([type="hidden"]), textarea')) {
-    const name = el.name || el.id || '';
-    if (name) {
-      chrome.storage.local.get(name, (result) => {
-        if (result[name]) {
-          el.value = result[name];
-          triggerEvents(el);
+// ===== АВТОЗАПОЛНЕНИЕ =====
+
+let autoFillEnabled = false;
+let autoFillObserver = null;
+
+// Функция для автозаполнения всех полей
+function autoFillAllFields() {
+  chrome.storage.local.get(null, (data) => {
+    // Удаляем ключ состояния автозаполнения
+    const { autoFillEnabled, ...fillData } = data;
+    const inputs = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
+    let filledCount = 0;
+    
+    for (const input of inputs) {
+      if (input.disabled || input.readOnly) continue;
+      
+      const id = input.id || '';
+      const name = input.name || '';
+      const placeholder = input.placeholder || '';
+      const label = input.closest('label')?.textContent?.trim() || '';
+      const ariaLabel = input.getAttribute('aria-label') || '';
+      
+      for (const [key, value] of Object.entries(fillData)) {
+        const searchKey = key.toLowerCase();
+        if (id.toLowerCase().includes(searchKey) || 
+            name.toLowerCase().includes(searchKey) || 
+            placeholder.toLowerCase().includes(searchKey) ||
+            label.toLowerCase().includes(searchKey) ||
+            ariaLabel.toLowerCase().includes(searchKey)) {
+          // Заполняем только пустые поля
+          if (!input.value || input.value.trim() === '') {
+            if (input.tagName === 'SELECT') {
+              const options = input.options;
+              for (let i = 0; i < options.length; i++) {
+                if (options[i].value === value || options[i].text === value) {
+                  input.value = options[i].value;
+                  triggerEvents(input);
+                  filledCount++;
+                  break;
+                }
+              }
+            } else {
+              input.value = value;
+              triggerEvents(input);
+              filledCount++;
+            }
+          }
+          break;
+        }
+      }
+    }
+    
+    if (filledCount > 0 && document.getElementById('test-data-helper-notification') === null) {
+      showNotification(`🔄 Автозаполнение: заполнено ${filledCount} полей`);
+    }
+  });
+}
+
+// Включить автозаполнение
+function enableAutoFill() {
+  if (autoFillEnabled) return;
+  autoFillEnabled = true;
+  
+  // Сначала заполняем существующие поля
+  setTimeout(autoFillAllFields, 300);
+  
+  // Настраиваем MutationObserver для отслеживания новых полей
+  if (autoFillObserver) {
+    autoFillObserver.disconnect();
+  }
+  
+  autoFillObserver = new MutationObserver((mutations) => {
+    let hasNewInputs = false;
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.matches?.('input:not([type="hidden"]), textarea, select') || 
+                node.querySelector?.('input:not([type="hidden"]), textarea, select')) {
+              hasNewInputs = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+    if (hasNewInputs) {
+      setTimeout(autoFillAllFields, 200);
+    }
+  });
+  
+  autoFillObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  console.log('✅ Автозаполнение включено');
+}
+
+// Отключить автозаполнение
+function disableAutoFill() {
+  if (!autoFillEnabled) return;
+  autoFillEnabled = false;
+  
+  if (autoFillObserver) {
+    autoFillObserver.disconnect();
+    autoFillObserver = null;
+  }
+  
+  // Удаляем уведомление
+  const notification = document.getElementById('test-data-helper-notification');
+  if (notification) notification.remove();
+  
+  console.log('⏸ Автозаполнение отключено');
+}
+
+// Проверяем состояние при загрузке страницы
+chrome.storage.local.get('autoFillEnabled', (result) => {
+  if (result.autoFillEnabled) {
+    enableAutoFill();
+  }
+});
+
+// Автоматически включаем автозаполнение при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+  chrome.storage.local.get('autoFillEnabled', (result) => {
+    if (result.autoFillEnabled) {
+      enableAutoFill();
+    }
+  });
+});
+
+// При изменении DOM (для SPA) также проверяем
+if (window.MutationObserver) {
+  const domObserver = new MutationObserver(() => {
+    if (autoFillEnabled) {
+      // Проверяем, не появились ли новые поля
+      chrome.storage.local.get('autoFillEnabled', (result) => {
+        if (result.autoFillEnabled && !autoFillEnabled) {
+          enableAutoFill();
         }
       });
     }
-  }
-});
-*/
+  });
+  
+  domObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+console.log('🔧 Test Data Helper content script loaded');

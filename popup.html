@@ -122,6 +122,7 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .btn-soft {
@@ -171,8 +172,16 @@
       background: #fcf6e7;
       border-color: #e4cf9e;
     }
+    .btn-soft.success {
+      color: #15803d;
+      border-color: #b8e0c8;
+    }
+    .btn-soft.success:hover {
+      background: #ecfdf3;
+      border-color: #86d9a3;
+    }
 
-    /* ——— Дополнительная панель (загрузить по умолчанию) ——— */
+    /* ——— Дополнительная панель (загрузить по умолчанию + автозаполнение) ——— */
     .action-bar {
       display: flex;
       gap: 12px;
@@ -368,10 +377,12 @@
   </div>
 </div>
 
-<!-- панель загрузки дефолта -->
+<!-- панель загрузки дефолта + автозаполнение -->
 <div class="action-bar">
   <button class="btn-soft warning" id="loadDefaultBtn">📂 По умолчанию</button>
   <span class="hint-text">из data.json</span>
+  <span style="flex:1;"></span>
+  <button class="btn-soft success" id="autoFillBtn">▶ Автозаполнение</button>
 </div>
 
 <!-- список -->
@@ -380,7 +391,7 @@
 </div>
 
 <div class="hint">
-  На любом сайте кликните по полю — оно заполнится, если ключ совпадает.
+  На любом сайте кликните по полю — оно заполнится, если ключ совпадает. Включите автозаполнение для автоматического заполнения всех полей.
 </div>
 
 <script src="popup.js"></script>
