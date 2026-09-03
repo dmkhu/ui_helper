@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      width: 400px;
+      padding: 16px;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+    h2 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      color: #333;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .row input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .row button {
+      padding: 6px 14px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .row button:hover { background: #43A047; }
+    .row button.delete-btn {
+      background: #e53935;
+      padding: 2px 8px;
+      font-size: 12px;
+    }
+    .row button.delete-btn:hover { background: #c62828; }
+    #list {
+      margin-top: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      border: 1px solid #ddd;
+    }
+    .item .key {
+      font-weight: bold;
+      color: #1565C0;
+      margin-right: 8px;
+    }
+    .item .value {
+      color: #333;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .item .actions {
+      display: flex;
+      gap: 4px;
+    }
+    .actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0 4px;
+    }
+    .actions button.fill-btn {
+      color: #1565C0;
+    }
+    .actions button.fill-btn:hover { color: #0D47A1; }
+    .actions button.delete-btn {
+      color: #e53935;
+    }
+    .actions button.delete-btn:hover { color: #b71C1C; }
+    .empty {
+      color: #888;
+      text-align: center;
+      padding: 20px 0;
+    }
+    .hint {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+    }
+    .clear-all {
+      background: #e53935;
+      color: white;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .clear-all:hover { background: #c62828; }
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .fill-all-btn {
+      background: #1565C0;
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .fill-all-btn:hover { background: #0D47A1; }
+    .fill-all-btn:disabled {
+      background: #90CAF9;
+      cursor: not-allowed;
+    }
+    .button-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+<h2>📦 Test Data</h2>
+
+<div class="row">
+  <input id="keyInput" placeholder="Ключ (например, email)" />
+  <input id="valueInput" placeholder="Значение" />
+  <button id="saveBtn">➕ Сохранить</button>
+</div>
+
+<div class="header-actions">
+  <span style="font-size:13px;color:#666;">Сохранённые данные</span>
+  <div class="button-group">
+    <button class="fill-all-btn" id="fillAllBtn">📝 Заполнить все</button>
+    <button class="clear-all" id="clearAllBtn">🗑 Очистить всё</button>
+  </div>
+</div>
+
+<div id="list">
+  <div class="empty">Нет данных. Добавьте пару выше.</div>
+</div>
+
+<div class="hint">
+  💡 На любом сайте кликните по полю ввода — оно заполнится, если ключ поля совпадает с сохранённым.
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

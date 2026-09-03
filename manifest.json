@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Test Data Helper",
+  "version": "1.0",
+  "description": "Хранит ключ-значение и заполняет поля ввода на сайтах для тестирования UI",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Test Data Helper"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
