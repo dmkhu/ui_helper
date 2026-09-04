@@ -6,11 +6,66 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearAllBtn = document.getElementById('clearAllBtn');
   const fillAllBtn = document.getElementById('fillAllBtn');
   const loadDefaultBtn = document.getElementById('loadDefaultBtn');
+  const autoFillBtn = document.getElementById('autoFillBtn');
+  const counterLabel = document.getElementById('counterLabel');
+
+  // Состояние автозаполнения
+  let isAutoFillEnabled = false;
+
+  // Загрузить состояние автозаполнения
+  function loadAutoFillState() {
+    chrome.storage.local.get('autoFillEnabled', (result) => {
+      isAutoFillEnabled = result.autoFillEnabled || false;
+      updateAutoFillButton();
+    });
+  }
+
+  // Обновить кнопку автозаполнения
+  function updateAutoFillButton() {
+    if (isAutoFillEnabled) {
+      autoFillBtn.textContent = '⏸ Автозаполнение Вкл';
+      autoFillBtn.classList.add('active');
+      autoFillBtn.style.background = '#22c55e';
+      autoFillBtn.style.color = 'white';
+      autoFillBtn.style.borderColor = '#22c55e';
+    } else {
+      autoFillBtn.textContent = '▶ Автозаполнение';
+      autoFillBtn.classList.remove('active');
+      autoFillBtn.style.background = 'transparent';
+      autoFillBtn.style.color = '#1e293b';
+      autoFillBtn.style.borderColor = '#dce2ec';
+    }
+  }
+
+  // Переключить автозаполнение
+  function toggleAutoFill() {
+    isAutoFillEnabled = !isAutoFillEnabled;
+    chrome.storage.local.set({ autoFillEnabled: isAutoFillEnabled }, () => {
+      updateAutoFillButton();
+      
+      // Отправить сообщение активной вкладке об изменении состояния
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length > 0) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'toggleAutoFill',
+            enabled: isAutoFillEnabled
+          }).catch(() => {
+            // Игнорируем ошибку, если страница не загружена
+          });
+        }
+      });
+    });
+  }
 
   // Загрузить и отобразить все данные
   function renderList() {
     chrome.storage.local.get(null, (items) => {
-      const keys = Object.keys(items);
+      // Удаляем ключ состояния автозаполнения из отображения
+      const { autoFillEnabled, ...dataItems } = items;
+      const keys = Object.keys(dataItems);
+      
+      counterLabel.textContent = keys.length;
+      
       if (keys.length === 0) {
         listEl.innerHTML = '<div class="empty">Нет данных. Добавьте пару выше.</div>';
         fillAllBtn.disabled = true;
@@ -20,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fillAllBtn.disabled = false;
       let html = '';
       keys.forEach((key) => {
-        const value = items[key];
+        const value = dataItems[key];
         html += `
           <div class="item">
             <span class="key">${escapeHtml(key)}</span>
@@ -85,7 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Очистить всё
   function clearAll() {
     if (confirm('Удалить все сохранённые данные?')) {
-      chrome.storage.local.clear(renderList);
+      chrome.storage.local.clear(() => {
+        // После очистки сохраняем состояние автозаполнения
+        chrome.storage.local.set({ autoFillEnabled: isAutoFillEnabled }, renderList);
+      });
     }
   }
 
@@ -117,7 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       chrome.storage.local.get(null, (allData) => {
-        const keys = Object.keys(allData);
+        // Удаляем ключ состояния автозаполнения
+        const { autoFillEnabled, ...data } = allData;
+        const keys = Object.keys(data);
+        
         if (keys.length === 0) {
           alert('Нет сохранённых данных');
           return;
@@ -126,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Отправляем все данные на страницу
         chrome.tabs.sendMessage(tabs[0].id, {
           action: 'fillAllFields',
-          data: allData
+          data: data
         }, (response) => {
           if (chrome.runtime.lastError) {
             alert('Ошибка: возможно, страница не загружена или расширение не имеет доступа');
@@ -140,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Загрузить данные из data.json
   function loadDefaultData() {
-    // Получаем URL до файла data.json в папке расширения
     const jsonUrl = chrome.runtime.getURL('data.json');
     
     fetch(jsonUrl)
@@ -151,29 +211,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return response.json();
       })
       .then(data => {
-        // Проверяем, что данные - это объект
         if (typeof data !== 'object' || data === null || Array.isArray(data)) {
           alert('Файл data.json должен содержать объект с парами ключ-значение');
           return;
         }
 
-        // Проверяем, есть ли уже данные в хранилище
         chrome.storage.local.get(null, (existingData) => {
-          const existingKeys = Object.keys(existingData);
+          const { autoFillEnabled, ...existingKeys } = existingData;
+          const keys = Object.keys(existingKeys);
           
-          // Если есть существующие данные, спрашиваем пользователя
-          if (existingKeys.length > 0) {
+          if (keys.length > 0) {
             if (!confirm('Внимание! У вас уже есть сохранённые данные. Загрузить данные из файла (существующие данные будут перезаписаны)?')) {
               return;
             }
           }
 
-          // Очищаем существующие данные и загружаем новые
           chrome.storage.local.clear(() => {
             // Сохраняем данные из файла
             chrome.storage.local.set(data, () => {
-              renderList();
-              alert(`Загружено ${Object.keys(data).length} записей из data.json`);
+              // Восстанавливаем состояние автозаполнения
+              chrome.storage.local.set({ autoFillEnabled: isAutoFillEnabled }, () => {
+                renderList();
+                alert(`Загружено ${Object.keys(data).length} записей из data.json`);
+              });
             });
           });
         });
@@ -189,10 +249,13 @@ document.addEventListener('DOMContentLoaded', () => {
   clearAllBtn.addEventListener('click', clearAll);
   fillAllBtn.addEventListener('click', fillAllOnActiveTab);
   loadDefaultBtn.addEventListener('click', loadDefaultData);
+  autoFillBtn.addEventListener('click', toggleAutoFill);
 
   // Enter в полях
   keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveKeyValue(); });
   valueInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveKeyValue(); });
 
+  // Загружаем состояние и рендерим
+  loadAutoFillState();
   renderList();
 });
