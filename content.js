@@ -76,6 +76,11 @@ function fillInputsByKey(key, value) {
     for (const el of elements) {
       if (el.type === 'hidden' || el.disabled || el.readOnly) continue;
       
+      // ⭐ НОВОЕ: Проверяем, не заполнено ли уже поле
+      if (el.value && el.value.trim() !== '') {
+        continue; // Пропускаем заполненное поле
+      }
+      
       if (el.tagName === 'SELECT') {
         const options = el.options;
         for (let i = 0; i < options.length; i++) {
@@ -99,6 +104,11 @@ function fillInputsByKey(key, value) {
     const allInputs = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
     for (const el of allInputs) {
       if (el.type === 'hidden' || el.disabled || el.readOnly) continue;
+      
+      // ⭐ НОВОЕ: Проверяем, не заполнено ли уже поле
+      if (el.value && el.value.trim() !== '') {
+        continue; // Пропускаем заполненное поле
+      }
       
       const attrs = el.attributes;
       let matched = false;
@@ -204,7 +214,7 @@ function showNotification(text) {
 let autoFillEnabled = false;
 let autoFillObserver = null;
 
-// Функция для автозаполнения всех полей
+// Функция для автозаполнения всех полей (исправленная)
 function autoFillAllFields() {
   chrome.storage.local.get(null, (data) => {
     // Удаляем ключ состояния автозаполнения
@@ -213,7 +223,13 @@ function autoFillAllFields() {
     let filledCount = 0;
     
     for (const input of inputs) {
+      // Пропускаем disabled и readonly поля
       if (input.disabled || input.readOnly) continue;
+      
+      // ⭐ ПРОВЕРКА: Если поле уже заполнено - пропускаем
+      if (input.value && input.value.trim() !== '') {
+        continue;
+      }
       
       const id = input.id || '';
       const name = input.name || '';
@@ -228,23 +244,21 @@ function autoFillAllFields() {
             placeholder.toLowerCase().includes(searchKey) ||
             label.toLowerCase().includes(searchKey) ||
             ariaLabel.toLowerCase().includes(searchKey)) {
-          // Заполняем только пустые поля
-          if (!input.value || input.value.trim() === '') {
-            if (input.tagName === 'SELECT') {
-              const options = input.options;
-              for (let i = 0; i < options.length; i++) {
-                if (options[i].value === value || options[i].text === value) {
-                  input.value = options[i].value;
-                  triggerEvents(input);
-                  filledCount++;
-                  break;
-                }
+          // ⭐ УБИРАЕМ ПРОВЕРКУ НА ПУСТОТУ, ТАК КАК МЫ УЖЕ ПРОВЕРИЛИ
+          if (input.tagName === 'SELECT') {
+            const options = input.options;
+            for (let i = 0; i < options.length; i++) {
+              if (options[i].value === value || options[i].text === value) {
+                input.value = options[i].value;
+                triggerEvents(input);
+                filledCount++;
+                break;
               }
-            } else {
-              input.value = value;
-              triggerEvents(input);
-              filledCount++;
             }
+          } else {
+            input.value = value;
+            triggerEvents(input);
+            filledCount++;
           }
           break;
         }
